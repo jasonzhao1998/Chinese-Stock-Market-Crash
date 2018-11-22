@@ -1,169 +1,117 @@
 import matplotlib.pyplot as plt
+import datetime
+import matplotlib.dates as dt
 import csv
 import os
-import datetime
 
 # change file name, only in csv format
-
-fileName = '600010'
+fileName = '600111'
 
 # initialize data lists
-
 dates = []
-
-openingPrices = []
-
 closingPrices = []
-
-highestPrices = []
-
-lowestPrices = []
-
 percentGain = []
-
 percentShortsell = []
-
 percentMargin = []
+ratioShortsell = []
+ratioMargin = []
 
 with open(fileName + '.csv', 'r') as csvfile:
-    plots = csv.reader(csvfile, delimiter=',')
+  plots = csv.reader(csvfile, delimiter=',')
+  for row in plots:
+    if row[8] == 'date': # skip first row
+      continue
+    
+    # date
+    curDate = row[8].split('-')
+    curDate = [int(i) for i in curDate]
+    if curDate[0] < 2014 or curDate[0] > 2015:
+      continue
+    elif curDate[0] == 2014 and curDate[1] < 10:
+      continue
+    dates.append(datetime.datetime(curDate[0], curDate[1], curDate[2]))
+    
+    # closing prices
+    closingPrices.append(float(row[10]))
+    
+    # 0 percent gain for empty entry
+    if len(row[16]):
+      percentGain.append(float(row[16]))
+    else:
+      percentGain.append(0)
 
-    for count, row in enumerate(plots):
+    # shortsell percentage
+    if float(row[18]) == 0:
+      percentShortsell.append(0)
+    else:
+      percentShortsell.append(float(row[5]) / float(row[18]))
 
-        if count == 0:  # skips first row
+    # margin trading percentage
+    if float(row[19]) == 0:
+      percentMargin.append(0)
+    else:
+      percentMargin.append(float(row[2]) / float(row[19]))
 
-            continue
+    # shortsell ratio
+    if float(row[7]) == 0:
+      ratioShortsell.append(0)
+    else:
+      rate = float(row[6]) / float(row[7])
+      ratioShortsell.append(rate)
 
-        date_str = row[8]
-        date_obj = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
-        dates.append(date_obj)
-        closingPrices.append(float(row[10]))
+    # margin trading ratio
+    if float(row[4]) == 0:
+      ratioMargin.append(0)
+    else:
+      ratioMargin.append(float(row[3]) / float(row[4]))
 
-        openingPrices.append(float(row[13]))
 
-        highestPrices.append(float(row[11]))
-
-        lowestPrices.append(float(row[12]))
-
-        # margin trading percentage
-
-        if float(row[19]) == 0:
-
-            percentMargin.append(0)
-
-        else:
-
-            percentMargin.append(float(row[2]) / float(row[19]))
-
-        # shortsell percentage
-
-        if float(row[18]) == 0:
-
-            percentShortsell.append(0)
-
-        else:
-
-            percentShortsell.append(float(row[5]) / float(row[18]))
-
-        # 0 percent gain for empty entry
-
-        if len(row[16]):
-
-            percentGain.append(100 * float(row[16]))
-
-        else:
-
-            percentGain.append(0)
-
-#create directory if does not exist
-
+# create directory if does not exist
 if not os.path.exists(fileName):
-    os.mkdir(fileName)
+  os.mkdir(fileName)
 
-# resizes plots
-
-plt.rcParams["figure.figsize"] = [24, 5]
+# resize plots
+plt.rcParams["figure.figsize"] = [25, 6]
 
 plt.plot(dates, closingPrices)
-
 plt.xlabel('Dates')
-
 plt.ylabel('Prices')
-
 plt.title('Closing Prices')
-
 plt.savefig(fileName + '/closingPrices.png')
-
-plt.clf()
-
-plt.plot(dates, highestPrices)
-
-plt.xlabel('Dates')
-
-plt.ylabel('Prices')
-
-plt.title('Highest Prices')
-
-plt.savefig(fileName + '/highestPrices.png')
-
-plt.clf()
-
-plt.plot(dates, lowestPrices)
-
-plt.xlabel('Dates')
-
-plt.ylabel('Prices')
-
-plt.title('Lowest Prices')
-
-plt.savefig(fileName + '/lowestPrices.png')
-
-plt.clf()
-
-plt.plot(dates, openingPrices)
-
-plt.xlabel('Dates')
-
-plt.ylabel('Prices')
-
-plt.title('Opening Prices')
-
-plt.savefig(fileName + '/openingPrices.png')
-
 plt.clf()
 
 plt.plot(dates, percentGain)
-
 plt.xlabel('Dates')
-
 plt.ylabel('Percent Gain')
-
 plt.title('Percent Gain')
-
 plt.savefig(fileName + '/percentGain.png')
-
 plt.clf()
 
 plt.plot(dates, percentShortsell)
-
 plt.xlabel('Dates')
-
 plt.ylabel('Percent Shortsell')
-
 plt.title('Percent Shortsell')
-
 plt.savefig(fileName + '/percentShortsell.png')
-
 plt.clf()
 
 plt.plot(dates, percentMargin)
-
 plt.xlabel('Dates')
-
 plt.ylabel('Percent Margin')
-
 plt.title('Percent Margin')
-
 plt.savefig(fileName + '/percentMargin.png')
+plt.clf()
 
+plt.yscale('log')
+plt.plot(dates, ratioShortsell)
+plt.xlabel('Dates')
+plt.ylabel('Ratio Shortshell')
+plt.title('Ratio Shortshell')
+plt.savefig(fileName + '/ratioShortsell.png')
+plt.clf()
+
+plt.plot(dates, ratioMargin)
+plt.xlabel('Dates')
+plt.ylabel('Ratio Margin')
+plt.title('Ratio Margin')
+plt.savefig(fileName + '/ratioMargin.png')
 plt.clf()
