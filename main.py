@@ -102,7 +102,25 @@ def save_plots(data):
     plot(data["dates"], data["short repay"] / data["trading volume"], "Dates",
          "Ratio", "Short Repay Over Trading Volume")
 
-    # delay plots
+    # skipping margin trading plots
+    plot(data["dates"][:-30], data["margin buy"][:-30] / data["margin repay"][30:],
+         "Dates", "Ratio", "Margin Buy Over Margin Repay in 30 Days")
+    plot(data["dates"][:-15], data["margin buy"][:-15] / data["margin repay"][15:],
+         "Dates", "Ratio", "Margin Buy Over Margin Repay in 15 Days")
+    plot(data["dates"][:-7], data["margin buy"][:-7] / data["margin repay"][7:],
+         "Dates", "Ratio", "Margin Buy Over Margin Repay in 7 Days")
+    plot(data["dates"][:-3], data["margin buy"][:-3] / data["margin repay"][3:],
+         "Dates", "Ratio", "Margin Buy Over Margin Repay in 3 Days")
+
+    # skipping short selling plots
+    plot(data["dates"][:-30], data["short sell"][:-30] / data["short repay"][30:], "Dates",
+         "Ratio", "Short Sell Over Short Repay in 30 Days", log=True)
+    plot(data["dates"][:-15], data["short sell"][:-15] / data["short repay"][15:], "Dates",
+         "Ratio", "Short Sell Over Short Repay In 15 Days", log=True)
+    plot(data["dates"][:-7], data["short sell"][:-7] / data["short repay"][7:], "Dates",
+         "Ratio", "Short Sell Over Short Repay In 7 Days", log=True)
+    plot(data["dates"][:-3], data["short sell"][:-3] / data["short repay"][3:], "Dates",
+         "Ratio", "Short Sell Over Short Repay In 3 Days", log=True)
 
 
 def main():
