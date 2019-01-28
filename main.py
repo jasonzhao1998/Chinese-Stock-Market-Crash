@@ -30,6 +30,9 @@ def read_data():
     short_sell = []
     short_repay = []
     closing_prices = []
+    highest_prices = []
+    lowest_prices = []
+    opening_prices = []
     percent_gain = []
     turnover_rate = []
     trading_volume = []
@@ -58,6 +61,9 @@ def read_data():
             short_sell.append(float(row[6]))
             short_repay.append(float(row[7])) if float(row[7]) != 0 else short_repay.append(0.1)
             closing_prices.append(float(row[10]))
+            highest_prices.append(float(row[11]))
+            lowest_prices.append(float(row[12]))
+            opening_prices.append(float(row[13]))
             percent_gain.append(float(row[16]))
             turnover_rate.append(float(row[17]))
             trading_volume.append(float(row[18]))
@@ -72,6 +78,9 @@ def read_data():
         "short sell": np.array(short_sell, dtype=np.float),
         "short repay": np.array(short_repay, dtype=np.float),
         "closing prices": np.array(closing_prices, dtype=np.float),
+        "highest prices": np.array(highest_prices, dtype=np.float),
+        "lowest prices": np.array(lowest_prices, dtype=np.float),
+        "opening prices": np.array(opening_prices, dtype=np.float),
         "percent gain": np.array(percent_gain, dtype=np.float),
         "turnover rate": np.array(turnover_rate, dtype=np.float),
         "trading volume": np.array(trading_volume, dtype=np.float),
@@ -89,6 +98,12 @@ def save_plots(data):
 
     plot(data["dates"], data["closing prices"], "Dates", "Prices in yuan", "Closing Prices")
     plot(data["dates"], data["percent gain"], "Dates", "Percent gain", "Percent Gain")
+
+    # number of margin traded stocks plots
+    plot(data["dates"], data["remaining margin"] / data["closing prices"], "Dates", "Ratio", "Remaining Margin Over Closing Prices")
+    plot(data["dates"], data["remaining margin"] / data["highest prices"], "Dates", "Ratio", "Remaining Margin Over Highest Prices")
+    plot(data["dates"], data["remaining margin"] / data["lowest prices"], "Dates", "Ratio", "Remaining Margin Over Lowest Prices")
+    plot(data["dates"], data["remaining margin"] / data["opening prices"], "Dates", "Ratio", "Remaining Margin Over Opening Prices")
 
     # margin trading plots
     plot(data["dates"], data["margin buy"] / data["margin repay"], "Dates", "Ratio", "Margin Buy Over Margin Repay")
