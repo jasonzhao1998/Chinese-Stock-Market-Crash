@@ -110,6 +110,9 @@ def save_plots(data):
     plot(data["dates"], data["margin buy"] / data["turnover"], "Dates", "Ratio", "Margin Buy Over Turnover")
     plot(data["dates"], data["margin repay"] / data["turnover"], "Dates", "Ratio", "Margin Repay Over Turnover")
 
+    # New
+    plot(data["dates"], (data["short sell"] / data["short repay"]) / (data["margin buy"] / data["margin repay"]), "Dates", "Ratio", "Short Over Margin")
+
     # short selling plots
     plot(data["dates"], data["short sell"] / data["short repay"], "Dates",
          "Ratio", "Short Sell Over Short Repay", log=True)
