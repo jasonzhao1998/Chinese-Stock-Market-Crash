@@ -9,10 +9,15 @@ import matplotlib.pyplot as plt
 FILE_NAME = '600111'
 
 
-def plot(x, y, x_label, y_label, title, log=False):
+def plot(x, y, x_label, y_label, title, log=False, xlim=None, ylim=None):
     if log:
         plt.yscale('log')
     plt.plot(x, y)
+    if xlim:
+        plt.xlim(xlim[0], xlim[1])
+    if ylim:
+        plt.ylim(ylim[0], ylim[1])
+    plt.gca().get_aspect('equal', adjustable='box')
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(title)
