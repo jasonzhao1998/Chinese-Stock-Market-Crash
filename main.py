@@ -17,7 +17,6 @@ def plot(x, y, x_label, y_label, title, log=False, xlim=None, ylim=None):
         plt.xlim(xlim[0], xlim[1])
     if ylim:
         plt.ylim(ylim[0], ylim[1])
-    plt.gca().get_aspect('equal', adjustable='box')
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(title)
