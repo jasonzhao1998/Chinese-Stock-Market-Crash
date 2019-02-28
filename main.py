@@ -1,15 +1,17 @@
 import os
 import csv
+import shutil
 import datetime
 import numpy as np
 import matplotlib.dates as dt
 import matplotlib.pyplot as plt
 
+
 # change file name, only in csv format
 FILE_NAME = '600111'
 
 
-def plot(x, y, x_label, y_label, title, log=False, xlim=None, ylim=None):
+def plot(x, y, x_label, y_label, title, log=False, xlim=None, ylim=None, path=''):
     if log:
         plt.yscale('log')
     plt.plot(x, y)
@@ -20,11 +22,15 @@ def plot(x, y, x_label, y_label, title, log=False, xlim=None, ylim=None):
     plt.xlabel(x_label)
     plt.ylabel(y_label)
     plt.title(title)
-    plt.savefig(FILE_NAME + '/' + title + '.png')
+    if path:
+        if not os.path.exists(FILE_NAME + '/' + path):
+            os.mkdir(FILE_NAME + '/' + path)
+        path += '/'
+    plt.savefig(FILE_NAME + '/' + path + title + '.png')
     plt.clf()
 
 
-def read_data():
+def read_data(date_range):
     # initialize lists
     dates = []
     remaining_margin = []
@@ -42,7 +48,7 @@ def read_data():
     trading_volume = []
     turnover = []
 
-    with open(FILE_NAME + '.csv', 'Ur') as csv_file:
+    with open(FILE_NAME + '.csv', 'r') as csv_file:
         data = csv.reader(csv_file, delimiter=',')
         for row in data:
             if row[8] == 'date':  # skip first row
@@ -51,9 +57,11 @@ def read_data():
             # date
             cur_date = row[8].split('-')
             cur_date = [int(i) for i in cur_date]
-            if cur_date[0] < 2014 or cur_date[0] > 2015:
+            if cur_date[0] < date_range[0] or cur_date[0] > date_range[2]:
                 continue
-            elif cur_date[0] == 2014 and cur_date[1] < 10:
+            elif cur_date[0] == date_range[0] and cur_date[1] < date_range[1]:
+                continue
+            elif cur_date[0] == date_range[2] and cur_date[1] > date_range[3]:
                 continue
             dates.append(datetime.datetime(cur_date[0], cur_date[1], cur_date[2]))
 
@@ -92,62 +100,78 @@ def read_data():
     }
 
 
-def save_plots(data):
-    # create directory if does not exist
-    if not os.path.exists(FILE_NAME):
-        os.mkdir(FILE_NAME)
+def plot_index(dates, ratio, x_label, y_label, title, log=False, xlim=None, ylim=None, window_size=5, path=""):
+    indices = []
+    for i in range(len(ratio) - window_size + 1):
+        total = 0
+        for j in range(window_size):
+            total += ratio[i + j]
+        indices.append(total / window_size)
+    plot(dates[:-(window_size - 1)], indices, x_label, y_label, title, log, xlim, ylim, path)
 
+
+def save_index_plots(data):
+    # resize plots
+    plt.rcParams["figure.figsize"] = [25, 6]
+    delay_range = [1, 3, 5, 7, 10, 15, 30]
+    for delay in delay_range:
+        plot_index(data["dates"][delay:], data["short sell"][:-delay] / data["short repay"][delay:], "Dates",
+                   "Short index", "Short Index with Delay " + str(delay) + " Days", ylim=[0, 3],
+                   window_size=5, path='short ratio')
+
+    delay_range = [1, 3, 5, 7, 10, 15, 30]
+    for delay in delay_range:
+        plot_index(data["dates"][delay:], data["margin buy"][:-delay] / data["margin repay"][delay:], "Dates",
+                   "Margin index", "Margin Index with Delay " + str(delay) + " Days", ylim=[0, 3],
+                   window_size=5, path='margin ratio')
+
+
+def save_plots(data):
     # resize plots
     plt.rcParams["figure.figsize"] = [25, 6]
 
+    # closing price, percent gain, and short margin ratio
     plot(data["dates"], data["closing prices"], "Dates", "Prices in yuan", "Closing Prices")
     plot(data["dates"], data["percent gain"], "Dates", "Percent gain", "Percent Gain")
-
-    # number of margin traded stocks plots
-    plot(data["dates"], data["remaining margin"] / data["closing prices"], "Dates", "Ratio", "Remaining Margin Over Closing Prices")
-    plot(data["dates"], data["remaining margin"] / data["highest prices"], "Dates", "Ratio", "Remaining Margin Over Highest Prices")
-    plot(data["dates"], data["remaining margin"] / data["lowest prices"], "Dates", "Ratio", "Remaining Margin Over Lowest Prices")
-    plot(data["dates"], data["remaining margin"] / data["opening prices"], "Dates", "Ratio", "Remaining Margin Over Opening Prices")
+    plot(data["dates"], (data["short sell"] / data["short repay"]) / (data["margin buy"] / data["margin repay"]),
+         "Dates", "Ratio", "Short Ratio Over Margin Ratio")
 
     # margin trading plots
-    plot(data["dates"], data["margin buy"] / data["margin repay"], "Dates", "Ratio", "Margin Buy Over Margin Repay")
-    plot(data["dates"], data["margin buy"] / data["turnover"], "Dates", "Ratio", "Margin Buy Over Turnover")
-    plot(data["dates"], data["margin repay"] / data["turnover"], "Dates", "Ratio", "Margin Repay Over Turnover")
+    plot(data["dates"], data["margin buy"] / data["turnover"], "Dates",
+         "Ratio", "Margin Buy Over Turnover", path='margin delay')
+    plot(data["dates"], data["margin repay"] / data["turnover"], "Dates",
+         "Ratio", "Margin Repay Over Turnover", path='margin delay')
 
-    # New
-    plot(data["dates"], (data["short sell"] / data["short repay"]) / (data["margin buy"] / data["margin repay"]), "Dates", "Ratio", "Short Over Margin")
+    delay_range = [1, 3, 5, 7, 10, 15, 30]
+    plot(data["dates"], data["margin buy"] / data["margin repay"], "Dates",
+         "Ratio", "Margin Buy Over Margin Repay", path='margin delay')
+    for delay in delay_range:
+        plot(data["dates"][delay:], data["margin buy"][:-delay] / data["margin repay"][delay:], 
+             "Dates", "Ratio", "Margin Buy Over Margin Repay in " + str(delay) + " Days", path='margin delay')
 
     # short selling plots
-    plot(data["dates"], data["short sell"] / data["short repay"], "Dates",
-         "Ratio", "Short Sell Over Short Repay", log=True)
-    plot(data["dates"], data["short sell"] / data["trading volume"], "Dates", "Ratio", "Short Sell Over Trading Volume")
+    plot(data["dates"], data["short sell"] / data["trading volume"], "Dates",
+         "Ratio", "Short Sell Over Trading Volume", path='short delay')
     plot(data["dates"], data["short repay"] / data["trading volume"], "Dates",
-         "Ratio", "Short Repay Over Trading Volume")
+         "Ratio", "Short Repay Over Trading Volume", path='short delay')
 
-    # skipping margin trading plots
-    plot(data["dates"][:-30], data["margin buy"][:-30] / data["margin repay"][30:],
-         "Dates", "Ratio", "Margin Buy Over Margin Repay in 30 Days")
-    plot(data["dates"][:-15], data["margin buy"][:-15] / data["margin repay"][15:],
-         "Dates", "Ratio", "Margin Buy Over Margin Repay in 15 Days")
-    plot(data["dates"][:-7], data["margin buy"][:-7] / data["margin repay"][7:],
-         "Dates", "Ratio", "Margin Buy Over Margin Repay in 7 Days")
-    plot(data["dates"][:-3], data["margin buy"][:-3] / data["margin repay"][3:],
-         "Dates", "Ratio", "Margin Buy Over Margin Repay in 3 Days")
-
-    # skipping short selling plots
-    plot(data["dates"][:-30], data["short sell"][:-30] / data["short repay"][30:], "Dates",
-         "Ratio", "Short Sell Over Short Repay in 30 Days", log=True)
-    plot(data["dates"][:-15], data["short sell"][:-15] / data["short repay"][15:], "Dates",
-         "Ratio", "Short Sell Over Short Repay In 15 Days", log=True)
-    plot(data["dates"][:-7], data["short sell"][:-7] / data["short repay"][7:], "Dates",
-         "Ratio", "Short Sell Over Short Repay In 7 Days", log=True)
-    plot(data["dates"][:-3], data["short sell"][:-3] / data["short repay"][3:], "Dates",
-         "Ratio", "Short Sell Over Short Repay In 3 Days", log=True)
+    delay_range = [1, 3, 5, 7, 10, 15, 30]
+    for delay in delay_range:
+        plot(data["dates"][delay:], data["short sell"][:-delay] / data["short repay"][delay:],
+             "Dates", "Ratio", "Short Sell Over Short Repay in " + str(delay) + " Days", log=True, path='short delay')
 
 
 def main():
-    data = read_data()
+    # create directory if does not exist
+    if not os.path.exists(FILE_NAME):
+        os.mkdir(FILE_NAME)
+    else:
+        shutil.rmtree(FILE_NAME)
+        os.mkdir(FILE_NAME)
+
+    data = read_data([2014, 11, 2015, 9])
     save_plots(data)
+    save_index_plots(data)
 
 
 if __name__ == '__main__':
