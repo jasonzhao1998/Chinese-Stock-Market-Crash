@@ -1,9 +1,9 @@
+"""Run plots for analysis on dataset."""
 import os
 import csv
 import shutil
 import datetime
 import numpy as np
-import matplotlib.dates as dt
 import matplotlib.pyplot as plt
 
 
@@ -12,6 +12,7 @@ FILE_NAME = '600111'
 
 
 def plot(x, y, x_label, y_label, title, log=False, xlim=None, ylim=None, path=''):
+    """Helper function for plotting data."""
     if log:
         plt.yscale('log')
     plt.plot(x, y)
@@ -31,6 +32,7 @@ def plot(x, y, x_label, y_label, title, log=False, xlim=None, ylim=None, path=''
 
 
 def read_data(date_range):
+    """Reads data from a given range of dates stored in a list."""
     # initialize lists
     dates = []
     remaining_margin = []
@@ -71,7 +73,10 @@ def read_data(date_range):
             margin_repay.append(float(row[4]))
             remaining_shortsell.append(float(row[5]))
             short_sell.append(float(row[6]))
-            short_repay.append(float(row[7])) if float(row[7]) != 0 else short_repay.append(0.1)
+            if float(row[7]) != 0:
+                short_repay.append(float(row[7]))
+            else:
+                short_repay.append(0.1)
             closing_prices.append(float(row[10]))
             highest_prices.append(float(row[11]))
             lowest_prices.append(float(row[12]))
@@ -100,7 +105,9 @@ def read_data(date_range):
     }
 
 
-def plot_index(dates, ratio, x_label, y_label, title, log=False, xlim=None, ylim=None, window_size=5, path=""):
+def plot_index(dates, ratio, x_label, y_label, title, log=False, xlim=None, ylim=None,
+               window_size=5, path=""):
+    """Helper function for plotting frequency indices."""
     indices = []
     for i in range(len(ratio) - window_size + 1):
         total = 0
@@ -115,15 +122,19 @@ def save_index_plots(data):
     plt.rcParams["figure.figsize"] = [25, 6]
     delay_range = [1, 3, 5, 7, 10, 15, 30]
     for delay in delay_range:
-        plot_index(data["dates"][delay:], data["short sell"][:-delay] / data["short repay"][delay:], "Dates",
-                   "Short index", "Short Index with Delay " + str(delay) + " Days", ylim=[0, 3],
-                   window_size=5, path='short ratio')
+        plot_index(
+            data["dates"][delay:], data["short sell"][:-delay] / data["short repay"][delay:],
+            "Dates", "Short index", "Short Index with Delay " + str(delay) + " Days", ylim=[0, 3],
+            window_size=5, path='short ratio'
+        )
 
     delay_range = [1, 3, 5, 7, 10, 15, 30]
     for delay in delay_range:
-        plot_index(data["dates"][delay:], data["margin buy"][:-delay] / data["margin repay"][delay:], "Dates",
-                   "Margin index", "Margin Index with Delay " + str(delay) + " Days", ylim=[0, 3],
-                   window_size=5, path='margin ratio')
+        plot_index(
+            data["dates"][delay:], data["margin buy"][:-delay] / data["margin repay"][delay:],
+            "Dates", "Margin index", "Margin Index with Delay " + str(delay) + " Days",
+            ylim=[0, 3], window_size=5, path='margin ratio'
+        )
 
 
 def save_plots(data):
@@ -133,8 +144,11 @@ def save_plots(data):
     # closing price, percent gain, and short margin ratio
     plot(data["dates"], data["closing prices"], "Dates", "Prices in yuan", "Closing Prices")
     plot(data["dates"], data["percent gain"], "Dates", "Percent gain", "Percent Gain")
-    plot(data["dates"], (data["short sell"] / data["short repay"]) / (data["margin buy"] / data["margin repay"]),
-         "Dates", "Ratio", "Short Ratio Over Margin Ratio")
+    plot(
+        data["dates"],
+        (data["short sell"] / data["short repay"]) / (data["margin buy"] / data["margin repay"]),
+        "Dates", "Ratio", "Short Ratio Over Margin Ratio"
+    )
 
     # margin trading plots
     plot(data["dates"], data["margin buy"] / data["turnover"], "Dates",
@@ -146,8 +160,12 @@ def save_plots(data):
     plot(data["dates"], data["margin buy"] / data["margin repay"], "Dates",
          "Ratio", "Margin Buy Over Margin Repay", path='margin delay')
     for delay in delay_range:
-        plot(data["dates"][delay:], data["margin buy"][:-delay] / data["margin repay"][delay:], 
-             "Dates", "Ratio", "Margin Buy Over Margin Repay in " + str(delay) + " Days", path='margin delay')
+        plot(
+            data["dates"][delay:],
+            data["margin buy"][:-delay] / data["margin repay"][delay:],
+            "Dates", "Ratio", "Margin Buy Over Margin Repay in " + str(delay) + " Days",
+            path='margin delay'
+        )
 
     # short selling plots
     plot(data["dates"], data["short sell"] / data["trading volume"], "Dates",
@@ -157,8 +175,11 @@ def save_plots(data):
 
     delay_range = [1, 3, 5, 7, 10, 15, 30]
     for delay in delay_range:
-        plot(data["dates"][delay:], data["short sell"][:-delay] / data["short repay"][delay:],
-             "Dates", "Ratio", "Short Sell Over Short Repay in " + str(delay) + " Days", log=True, path='short delay')
+        plot(
+            data["dates"][delay:], data["short sell"][:-delay] / data["short repay"][delay:],
+            "Dates", "Ratio", "Short Sell Over Short Repay in " + str(delay) + " Days", log=True,
+            path='short delay'
+        )
 
 
 def main():
