@@ -8,12 +8,6 @@ venv/
 venv3/
 .venv/
 
-# JavaScript
-bundle.js
-node_modules/
-files_for_autograder_io/
-*/var/*
-
 # Virtual Machines
 .vagrant/
 
@@ -28,10 +22,6 @@ files_for_autograder_io/
 
 # macOS system files
 .DS_Store
-
-# Google Drive and Dropbox
-Icon
-.dropbox*
 
 600111/
 600010/
